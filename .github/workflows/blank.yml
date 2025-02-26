@@ -21,6 +21,4 @@ jobs:
           token: ${{ secrets.ATTIC_TOKEN }}
       - name: build all packages
         run: nix flake check --keep-going
-      - name: upload all packages to cache
-        run: nix path-info --all | grep -v '.drv$' | attic push ${{ secrets.ATTIC_CACHE }}
       
