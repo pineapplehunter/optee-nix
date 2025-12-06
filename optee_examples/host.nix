@@ -3,6 +3,7 @@
   optee-client,
   optee-examples-ta,
   stdenv,
+  lib,
 }:
 
 stdenv.mkDerivation {
@@ -11,6 +12,8 @@ stdenv.mkDerivation {
 
   nativeBuildInputs = [ cmake ];
   buildInputs = [ optee-client ];
+
+  cmakeFlags = [ (lib.cmakeFeature "CMAKE_POLICY_VERSION_MINIMUM" "3.5") ];
 
   postPatch = ''
     substituteInPlace plugins/syslog/CMakeLists.txt \
