@@ -12,6 +12,7 @@ let
     optee-ftpm
     optee-os
     optee-os-devkit
+    optee-test
     optee-uboot
     ;
 in
@@ -38,6 +39,10 @@ runCommand "optee-package-set-check" { } ''
 
   test -f ${optee-ftpm.ta}
   test -f ${optee-ftpm.earlyTa}
+
+  test -x ${optee-test}/bin/xtest
+  test -n "$(find ${optee-test}/lib/optee_armtz -name '*.ta' -print -quit)"
+  test -n "$(find ${optee-test}/lib/tee-supplicant/plugins -name '*.plugin' -print -quit)"
 
   test -f ${optee-examples-ta}/lib/optee_armtz/8aaaf200-2450-11e4-abe2-0002a5d5c51b.ta
   test -x ${optee-examples-host}/bin/optee_example_hello_world
