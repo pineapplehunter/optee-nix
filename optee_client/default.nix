@@ -1,27 +1,16 @@
 {
-  buildPackages,
-  dtc,
   fetchFromGitHub,
-  stdenv,
-  optee-ftpm,
   lib,
   libuuid,
-  which,
   pkg-config,
+  stdenv,
+  which,
 }:
 
-let
-  python-env = (
-    buildPackages.python3.withPackages (ps: [
-      ps.cryptography
-      ps.pyelftools
-    ])
-  );
-in
-
 stdenv.mkDerivation (finalAttrs: {
-  pname = "optee_os";
+  pname = "optee-client";
   version = "4.10.0";
+
   src = fetchFromGitHub {
     owner = "OP-TEE";
     repo = "optee_client";
@@ -29,18 +18,17 @@ stdenv.mkDerivation (finalAttrs: {
     hash = "sha256-8oYQe5gEeDBPnouWk/GK740BqrUvpqT5XaivZ59IGyU=";
   };
 
+  strictDeps = true;
   nativeBuildInputs = [
-    # python-env
-    # dtc
-    which
     pkg-config
+    which
   ];
-
   buildInputs = [ libuuid ];
 
   enableParallelBuilding = true;
 
   makeFlags = [
+    "CROSS_COMPILE=${stdenv.cc.targetPrefix}"
     "DESTDIR="
     "SBINDIR=${placeholder "out"}/sbin"
     "LIBDIR=${placeholder "lib"}/lib"
@@ -53,5 +41,11 @@ stdenv.mkDerivation (finalAttrs: {
     "dev"
   ];
 
-  meta = { };
+  meta = {
+    description = "Normal-world client APIs and supplicant for OP-TEE";
+    homepage = "https://github.com/OP-TEE/optee_client";
+    license = lib.licenses.bsd2;
+    platforms = lib.platforms.linux;
+    mainProgram = "tee-supplicant";
+  };
 })

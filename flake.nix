@@ -17,14 +17,10 @@
 
         flake.overlays.default = final: prev: {
           optee-os = final.callPackage ./optee_os { };
-          optee-os-devkit =
-            (final.optee-os.override {
-              enable-ftpm = false;
-            }).overrideAttrs
-              (old: {
-                pname = old.pname + "-devkit";
-                makeFlags = old.makeFlags ++ [ "ta_dev_kit" ];
-              });
+          optee-os-devkit = final.optee-os.override {
+            enable-ftpm = false;
+            devkitOnly = true;
+          };
           optee-ftpm = final.callPackage ./optee_ftpm { };
           optee-client = final.callPackage ./optee_client { };
 
@@ -39,6 +35,9 @@
             system,
             ...
           }:
+          let
+            targetPackages = pkgs.pkgsCross.aarch64-multiplatform;
+          in
           {
             _module.args.pkgs = import inputs.nixpkgs {
               inherit system;
@@ -48,14 +47,19 @@
             };
 
             packages = rec {
-              inherit (pkgs.pkgsCross.aarch64-multiplatform)
-                optee-os
-                optee-ftpm
+              inherit (targetPackages)
                 optee-client
-                optee-examples-ta
                 optee-examples-host
+                optee-examples-ta
+                optee-ftpm
+                optee-os
+                optee-os-devkit
                 ;
               default = optee-os;
+            };
+
+            checks.package-set = pkgs.callPackage ./tests/package-set.nix {
+              pkgsCross = targetPackages;
             };
 
             formatter = pkgs.nixfmt-tree;

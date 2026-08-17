@@ -1,15 +1,16 @@
 {
   cmake,
+  lib,
   optee-client,
   optee-examples-ta,
   stdenv,
-  lib,
 }:
 
 stdenv.mkDerivation {
   pname = "optee-examples-host";
   inherit (optee-examples-ta) version src;
 
+  strictDeps = true;
   nativeBuildInputs = [ cmake ];
   buildInputs = [ optee-client ];
 
@@ -19,4 +20,11 @@ stdenv.mkDerivation {
     substituteInPlace plugins/syslog/CMakeLists.txt \
       --replace-fail "/usr/lib" "\''${CMAKE_INSTALL_LIBDIR}"
   '';
+
+  meta = {
+    description = "Normal-world host applications from the OP-TEE examples";
+    homepage = "https://github.com/linaro-swg/optee_examples";
+    license = lib.licenses.bsd2;
+    platforms = lib.platforms.linux;
+  };
 }
