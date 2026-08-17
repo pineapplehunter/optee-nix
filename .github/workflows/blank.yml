@@ -2,23 +2,47 @@ name: CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [main]
   pull_request:
-    branches: [ "main" ]
+    branches: [main]
   workflow_dispatch:
 
 jobs:
-  build:
+  evaluate:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: cachix/install-nix-action@v30
-      - name: Setup Attic cache
+      - name: Check formatting
+        run: nix fmt -- --ci
+      - name: Evaluate flake outputs
+        run: nix flake check --all-systems --no-build
+
+  packages:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: cachix/install-nix-action@v30
+      - name: Set up Attic cache
         uses: ryanccn/attic-action@v0
         with:
           endpoint: ${{ vars.ATTIC_ENDPOINT }}
           cache: ${{ vars.ATTIC_CACHE }}
           token: ${{ secrets.ATTIC_TOKEN }}
-      - name: build all packages
-        run: nix flake check --keep-going --fallback
-      
+      - name: Build and inspect package outputs
+        run: nix build .#checks.x86_64-linux.package-set --no-link --fallback
+
+  vm-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: cachix/install-nix-action@v30
+      - name: Set up Attic cache
+        uses: ryanccn/attic-action@v0
+        with:
+          endpoint: ${{ vars.ATTIC_ENDPOINT }}
+          cache: ${{ vars.ATTIC_CACHE }}
+          token: ${{ secrets.ATTIC_TOKEN }}
+      - name: Run OP-TEE VM test
+        run: nix build .#checks.x86_64-linux.optee-vm --no-link --fallback
