@@ -31,6 +31,13 @@ buildArmTrustedFirmware {
     "build/qemu/release/fip.bin"
   ];
 
+  postInstall = ''
+    dd if=$out/share/optee/firmware/bl1.bin \
+      of=$out/share/optee/firmware/flash.bin bs=4096 conv=notrunc
+    dd if=$out/share/optee/firmware/fip.bin \
+      of=$out/share/optee/firmware/flash.bin bs=4096 seek=64 conv=notrunc
+  '';
+
   extraMeta = {
     description = "Trusted Firmware-A boot chain with OP-TEE for QEMU virt";
     homepage = "https://optee.readthedocs.io";

@@ -24,7 +24,10 @@ stdenv.mkDerivation (finalAttrs: {
 
   strictDeps = true;
   nativeBuildInputs = [ python-env ];
-  buildInputs = [ openssl ];
+  buildInputs = [
+    openssl
+    optee-client.lib
+  ];
 
   enableParallelBuilding = true;
 

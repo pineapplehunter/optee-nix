@@ -25,7 +25,7 @@
             };
             ftpm = final.callPackage ./optee_ftpm { };
             client = final.callPackage ./optee_client { };
-            uboot = final.ubootQemuAarch64.overrideAttrs {
+            uboot = final.ubootQemuAarch64.overrideAttrs (old: {
               version = "2025.07";
               src = final.fetchFromGitHub {
                 owner = "u-boot";
@@ -33,7 +33,11 @@
                 tag = "v2025.07";
                 hash = "sha256-X+JhVkDudkvQo08hGwAChOeMZZR+iunT9aU6tSAuMmg=";
               };
-            };
+              postPatch = (old.postPatch or "") + ''
+                substituteInPlace board/emulation/qemu-arm/qemu-arm.env \
+                  --replace-fail 'ramdisk_addr_r=0x44000000' 'ramdisk_addr_r=0x48000000'
+              '';
+            });
             firmware = final.callPackage ./optee_firmware { };
             test = final.callPackage ./optee_test { };
             examples-ta = final.callPackage ./optee_examples/ta.nix { };
@@ -60,6 +64,7 @@
           }:
           let
             targetPackages = pkgs.pkgsCross.aarch64-multiplatform;
+            opteeVm = pkgs.callPackage ./tests/optee-vm.nix { };
           in
           {
             _module.args.pkgs = import inputs.nixpkgs {
@@ -82,10 +87,31 @@
                 optee-uboot
                 ;
               default = optee-os;
+            }
+            // pkgs.lib.optionalAttrs (system == "x86_64-linux") {
+              qemu-run = opteeVm.driverInteractive;
             };
 
-            checks.package-set = pkgs.callPackage ./tests/package-set.nix {
-              pkgsCross = targetPackages;
+            checks = {
+              package-set = pkgs.callPackage ./tests/package-set.nix { };
+            }
+            // pkgs.lib.optionalAttrs (system == "x86_64-linux") {
+              optee-vm = opteeVm;
+            };
+
+            apps = pkgs.lib.optionalAttrs (system == "x86_64-linux") {
+              default = {
+                type = "app";
+                program = "${opteeVm.driverInteractive}/bin/nixos-test-driver";
+                meta.description = "Launch the interactive OP-TEE NixOS VM test";
+              };
+            };
+
+            devShells.default = pkgs.mkShellNoCC {
+              packages = [
+                pkgs.nixfmt-tree
+                pkgs.shellcheck
+              ];
             };
 
             formatter = pkgs.nixfmt-tree;

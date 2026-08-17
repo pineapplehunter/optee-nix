@@ -4,7 +4,7 @@
 }:
 
 let
-  inherit (pkgsCross)
+  inherit (pkgsCross.aarch64-multiplatform)
     optee-client
     optee-examples-host
     optee-examples-ta
@@ -28,6 +28,7 @@ runCommand "optee-package-set-check" { } ''
   test -f ${optee-firmware}/share/optee/firmware/bl2.bin
   test -f ${optee-firmware}/share/optee/firmware/bl31.bin
   test -f ${optee-firmware}/share/optee/firmware/fip.bin
+  test -f ${optee-firmware}/share/optee/firmware/flash.bin
 
   test -f ${optee-os-devkit.devkit-dir}/mk/ta_dev_kit.mk
   test -f ${optee-os-devkit.devkit-dir}/include/tee_api.h
