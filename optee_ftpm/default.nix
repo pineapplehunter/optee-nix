@@ -16,15 +16,15 @@ let
   python-env = buildPackages.python3.withPackages (ps: [ ps.cryptography ]);
 in
 
-stdenv.mkDerivation {
+stdenv.mkDerivation (finalAttrs: {
   pname = "optee_ftpm";
-  version = "4.5.0-unstable-2025-02-06";
+  version = "4.10.0";
 
   src = fetchFromGitHub {
     owner = "OP-TEE";
     repo = "optee_ftpm";
-    rev = "8675623483ba729b0153401da9d70a93b10e38ea";
-    hash = "sha256-6ZrPwAL+nKGioIlxK9NCnsim9KpXoBMvdraFGq5v5TQ=";
+    tag = finalAttrs.version;
+    hash = "sha256-WGEpDd+yokJinTFtN7W6phUZHxBoRaJq+hvmSsY3HXU=";
   };
 
   nativeBuildInputs = [ python-env ];
@@ -42,4 +42,4 @@ stdenv.mkDerivation {
   ];
 
   dontInstall = true;
-}
+})

@@ -19,14 +19,14 @@ let
   );
 in
 
-stdenv.mkDerivation (final: {
+stdenv.mkDerivation (finalAttrs: {
   pname = "optee_os";
-  version = "4.5.0-unstable-2025-02-24";
+  version = "4.10.0";
   src = fetchFromGitHub {
     owner = "OP-TEE";
     repo = "optee_client";
-    rev = "6486773583b5983af8250a47cf07eca938e0e422";
-    hash = "sha256-j4ZMaop3H3yNOWdrprEwM4ALN+o9C+smprrGjbotkEs=";
+    tag = finalAttrs.version;
+    hash = "sha256-8oYQe5gEeDBPnouWk/GK740BqrUvpqT5XaivZ59IGyU=";
   };
 
   nativeBuildInputs = [

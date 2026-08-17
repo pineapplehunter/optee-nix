@@ -10,15 +10,15 @@ let
   python-env = buildPackages.python3.withPackages (ps: [ ps.cryptography ]);
 in
 
-stdenv.mkDerivation {
+stdenv.mkDerivation (finalAttrs: {
   pname = "optee-examples-ta";
-  version = "4.5.0-unstable-2025-01-10";
+  version = "4.10.0";
 
   src = fetchFromGitHub {
     owner = "linaro-swg";
     repo = "optee_examples";
-    rev = "5306d2c7c618bb4a91df17a2d5d79ae4701af4a3";
-    hash = "sha256-LQGPsy1OE7trk4s378Y8MWAdZ0B72aUJ24yy8rl5k2c=";
+    tag = finalAttrs.version;
+    hash = "sha256-8SaicPUvU5lSJeSOhmd8L3bRiRpQrHteoYAoPmNpLJ8=";
   };
 
   nativeBuildInputs = [ python-env ];
@@ -42,4 +42,4 @@ stdenv.mkDerivation {
   '';
 
   dontInstall = true;
-}
+})
