@@ -23,6 +23,16 @@
           };
           optee-ftpm = final.callPackage ./optee_ftpm { };
           optee-client = final.callPackage ./optee_client { };
+          optee-uboot = final.ubootQemuAarch64.overrideAttrs {
+            version = "2025.07";
+            src = final.fetchFromGitHub {
+              owner = "u-boot";
+              repo = "u-boot";
+              tag = "v2025.07";
+              hash = "sha256-X+JhVkDudkvQo08hGwAChOeMZZR+iunT9aU6tSAuMmg=";
+            };
+          };
+          optee-firmware = final.callPackage ./optee_firmware { };
 
           # examples
           optee-examples-ta = final.callPackage ./optee_examples/ta.nix { };
@@ -51,9 +61,11 @@
                 optee-client
                 optee-examples-host
                 optee-examples-ta
+                optee-firmware
                 optee-ftpm
                 optee-os
                 optee-os-devkit
+                optee-uboot
                 ;
               default = optee-os;
             };
