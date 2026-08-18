@@ -19,7 +19,7 @@ jobs:
           - ubuntu-latest
           - ubuntu-26.04-arm
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 90
+    timeout-minutes: 720 # 12 hour
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: wimpysworld/nothing-but-nix@687c797a730352432950c707ab493fcc951818d7 # v10
