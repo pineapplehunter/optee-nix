@@ -96,9 +96,11 @@ nix develop
 
 The VM check verifies normal- and secure-world boot, the TEE devices,
 `tee-supplicant`, kernel OP-TEE initialization, the hello-world client/TA round
-trip, and bounded regression test `xtest -t regression 1001`. PKCS#11 test 1001
-is intentionally outside that filtered baseline because the guest does not yet
-install the PKCS#11 TA.
+trip, bounded regression test `xtest -t regression 1001`, and an fTPM random
+number request through `/dev/tpm0`. The guest kernel uses the matching nixpkgs
+NixOS kernel source and configuration with `TCG_FTPM_TEE` enabled as a module.
+PKCS#11 test 1001 is intentionally outside that filtered baseline because the
+guest does not yet install the PKCS#11 TA.
 
 The development shell provides nixfmt-tree and ShellCheck.
 
@@ -120,5 +122,5 @@ The development shell provides nixfmt-tree and ShellCheck.
 - Only the AArch64 QEMU virt platform is integrated.
 - The VM uses software emulation and development keys.
 - The automated baseline runs a focused `xtest` subset, not every upstream test.
-- fTPM is embedded in OP-TEE and packaged for normal-world loading, but an
-  end-to-end TPM smoke test is not implemented yet.
+- The custom guest kernel differs from the matching nixpkgs NixOS kernel
+  configuration only by enabling the in-tree `TCG_FTPM_TEE` module.

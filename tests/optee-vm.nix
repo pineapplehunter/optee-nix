@@ -8,6 +8,12 @@
 let
   targetPackages = pkgsCross.aarch64-multiplatform;
   firmware = targetPackages.optee-firmware;
+  ftpmKernel = targetPackages.linuxPackages.kernel.override {
+    structuredExtraConfig = with lib.kernel; {
+      TCG_FTPM_TEE = module;
+    };
+  };
+  ftpmKernelPackages = targetPackages.linuxPackagesFor ftpmKernel;
 in
 testers.nixosTest {
   name = "optee-vm";
@@ -19,6 +25,8 @@ testers.nixosTest {
       nixpkgs.pkgs = targetPackages;
 
       boot = {
+        kernelPackages = ftpmKernelPackages;
+        kernelModules = [ "tpm_ftpm_tee" ];
         kernelParams = [
           "console=ttyAMA0,38400"
           "keep_bootcon"
@@ -30,6 +38,7 @@ testers.nixosTest {
         pkgs.optee-client
         pkgs.optee-examples-host
         pkgs.optee-test
+        pkgs.tpm2-tools
       ];
 
       systemd.services.tee-supplicant = {
@@ -78,5 +87,8 @@ testers.nixosTest {
     machine.succeed("dmesg | grep -i optee")
     machine.succeed("optee_example_hello_world")
     machine.succeed("xtest -t regression 1001", timeout=timedelta(minutes=2))
+    machine.wait_for_file("/dev/tpm0", timeout=timedelta(seconds=30))
+    machine.succeed("test -c /dev/tpmrm0")
+    machine.succeed("tpm2_getrandom --hex 8 | grep -Eq '^[[:xdigit:]]{16}$'")
   '';
 }
