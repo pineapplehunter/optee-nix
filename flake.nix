@@ -87,24 +87,18 @@
                 optee-uboot
                 ;
               default = optee-os;
-            }
-            // pkgs.lib.optionalAttrs (system == "x86_64-linux") {
               qemu-run = opteeVm.driverInteractive;
             };
 
             checks = {
               package-set = pkgs.callPackage ./tests/package-set.nix { };
-            }
-            // pkgs.lib.optionalAttrs (system == "x86_64-linux") {
-              optee-vm = opteeVm;
+              inherit opteeVm;
             };
 
-            apps = pkgs.lib.optionalAttrs (system == "x86_64-linux") {
-              default = {
-                type = "app";
-                program = "${opteeVm.driverInteractive}/bin/nixos-test-driver";
-                meta.description = "Launch the interactive OP-TEE NixOS VM test";
-              };
+            apps.default = {
+              type = "app";
+              program = "${opteeVm.driverInteractive}/bin/nixos-test-driver";
+              meta.description = "Launch the interactive OP-TEE NixOS VM test";
             };
 
             devShells.default = pkgs.mkShellNoCC {
