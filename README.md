@@ -33,13 +33,38 @@ Requirements:
 nix run
 ```
 
-This opens the NixOS test driver's Python REPL. Start the machine and attach to
-its normal-world serial console with:
+This opens the NixOS test driver's Python REPL. Start the machine and open an
+interactive normal-world shell with:
 
 ```python
 start_all()
 machine.shell_interact()
 ```
+
+The shell uses the test driver's virtio console (`/dev/hvc0`), rather than one
+of the platform's serial UARTs.
+
+### Serial console routing
+
+The secure and normal worlds use separate emulated PL011 UARTs; there is no
+runtime switch between them. QEMU assigns `-serial` backends in order. This test
+routes them as follows:
+
+- the first UART (`ttyAMA0`) carries U-Boot, Linux, and systemd normal-world
+  output to `normal-world.log`;
+- the second UART carries TF-A and OP-TEE secure-world output to QEMU standard
+  output, which the NixOS test driver displays and returns from
+  `machine.get_console_log()`.
+
+After starting the VM, find the normal-world log from the Python REPL with:
+
+```python
+print(machine.state_dir / "normal-world.log")
+```
+
+It can then be followed from another terminal with `tail -f`. Because the first
+UART uses QEMU's `file:` backend, it is output-only; use
+`machine.shell_interact()` for an interactive normal-world shell.
 
 Use <kbd>Ctrl-D</kbd> to leave the shell and then the REPL. The driver cleans up
 the VM. Runtime QEMU options can be overridden without rebuilding, for example:
