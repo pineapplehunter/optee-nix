@@ -12,59 +12,23 @@ permissions:
   id-token: write
 
 jobs:
-  evaluate:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
-      - uses: wimpysworld/nothing-but-nix@687c797a730352432950c707ab493fcc951818d7 # v10
-      - uses: cachix/install-nix-action@8aa03977d8d733052d78f4e008a241fd1dbf36b3 # v31.10.6
-      - name: Build niks3
-        id: niks3
-        run: |
-          path=$(nix build nixpkgs#niks3 --print-out-paths --no-link --inputs-from .)
-          echo "store-path=$path" >> "$GITHUB_OUTPUT"
-      - uses: Mic92/niks3-action@12d3e320b2a99b7938f9634bd337cd9fec104609 # v1.1.0
-        with:
-          server-url: https://niks3.s.ihavenojob.work
-          niks3-bin: ${{ steps.niks3.outputs.store-path }}/bin/niks3
-      - name: Check formatting
-        run: nix fmt -- --ci
-      - name: Evaluate flake outputs
-        run: nix flake check --all-systems --no-build
-
-  packages:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
-      - uses: wimpysworld/nothing-but-nix@687c797a730352432950c707ab493fcc951818d7 # v10
-      - uses: cachix/install-nix-action@8aa03977d8d733052d78f4e008a241fd1dbf36b3 # v31.10.6
-      - name: Build niks3
-        id: niks3
-        run: |
-          path=$(nix build nixpkgs#niks3 --print-out-paths --no-link --inputs-from .)
-          echo "store-path=$path" >> "$GITHUB_OUTPUT"
-      - uses: Mic92/niks3-action@12d3e320b2a99b7938f9634bd337cd9fec104609 # v1.1.0
-        with:
-          server-url: https://niks3.s.ihavenojob.work
-          niks3-bin: ${{ steps.niks3.outputs.store-path }}/bin/niks3
-      - name: Build and inspect package outputs
-        run: nix build .#checks.x86_64-linux.package-set --no-link --fallback
-
   vm-test:
     runs-on: ubuntu-latest
     timeout-minutes: 90
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: wimpysworld/nothing-but-nix@687c797a730352432950c707ab493fcc951818d7 # v10
-      - uses: cachix/install-nix-action@8aa03977d8d733052d78f4e008a241fd1dbf36b3 # v31.10.6
-      - name: Build niks3
+      - uses: cachix/install-nix-action@13d8dd58da0234aa297dedd986986ccb8e7f3e24 # v31.11.1
+      - name: install packages
+        run: nix profile add --inputs-from . nixpkgs#niks3
+      - name: Get niks3 path
         id: niks3
         run: |
-          path=$(nix build nixpkgs#niks3 --print-out-paths --no-link --inputs-from .)
+          path=$(which niks3)
           echo "store-path=$path" >> "$GITHUB_OUTPUT"
       - uses: Mic92/niks3-action@12d3e320b2a99b7938f9634bd337cd9fec104609 # v1.1.0
         with:
           server-url: https://niks3.s.ihavenojob.work
-          niks3-bin: ${{ steps.niks3.outputs.store-path }}/bin/niks3
+          niks3-bin: ${{ steps.niks3.outputs.store-path }}
       - name: Run OP-TEE VM test
-        run: nix build .#checks.x86_64-linux.optee-vm --no-link --fallback
+        run: nix flake check --accept-flake-config

@@ -118,4 +118,9 @@
           };
       }
     );
+
+  nixConfig = {
+    extra-substituters = [ "https://niks3.gweb.ihavenojob.work?priority=50" ];
+    extra-trusted-public-keys = [ "niks3-cache:RW+9UW/AgeDvEawJndPbzNVYQcDPjXA4J23srAi5+sE=" ];
+  };
 }
