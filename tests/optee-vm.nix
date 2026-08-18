@@ -68,7 +68,7 @@ testers.nixosTest {
             "-machine virt,secure=on,gic-version=3,virtualization=off"
             "-cpu max"
             "-bios ${firmware}/share/optee/firmware/flash.bin"
-            "-serial file:secure-world.log"
+            "-serial file:normal-world.log"
           ];
         };
       };
@@ -81,6 +81,15 @@ testers.nixosTest {
 
     start_all()
     machine.wait_for_unit("multi-user.target")
+
+    secure_world_output = machine.get_console_log()
+    for message in [
+        "I/TC: OP-TEE version:",
+        "I/TC: Primary CPU switching to normal world boot",
+        "Early TA bc50d971-d4c9-42c4-82cb-343fb7f37896",
+    ]:
+        assert message in secure_world_output, f"secure-world log is missing: {message}"
+
     machine.wait_for_unit("tee-supplicant.service")
     machine.succeed("test -c /dev/tee0")
     machine.succeed("test -c /dev/teepriv0")
