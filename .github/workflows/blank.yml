@@ -8,8 +8,11 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
   id-token: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  queue: max
 
 jobs:
   vm-test:
