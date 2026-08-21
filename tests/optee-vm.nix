@@ -63,7 +63,6 @@ testers.nixosTest {
         cores = 2;
         memorySize = 2048;
         qemu = {
-          package = lib.mkForce qemu;
           options = [
             "-machine virt,secure=on,gic-version=3,virtualization=off"
             "-cpu max"
@@ -74,7 +73,7 @@ testers.nixosTest {
       };
     };
 
-  interactive.qemu.package = lib.mkForce qemu;
+  interactive.nodes.machine.virtualisation.qemu.options = [ "-device virtio-gpu-pci" ];
 
   testScript = ''
     from datetime import timedelta
