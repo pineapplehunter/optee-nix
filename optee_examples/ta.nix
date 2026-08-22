@@ -33,7 +33,7 @@ stdenv.mkDerivation (finalAttrs: {
 
     for d in *; do
       [ -f "$d/Makefile" ] || continue
-      make -C "$d/ta" O="$NIX_BUILD_TOP/ta-build/$d" $makeFlags
+      make -C "$d/ta" O=build $makeFlags
     done
 
     runHook postBuild
@@ -42,7 +42,7 @@ stdenv.mkDerivation (finalAttrs: {
   installPhase = ''
     runHook preInstall
     mkdir -p $out/lib/optee_armtz
-    find "$NIX_BUILD_TOP/ta-build" -name '*.ta' -exec install -Dm644 {} $out/lib/optee_armtz/ \;
+    find . -path '*/ta/build/*.ta' -exec install -Dm644 {} $out/lib/optee_armtz/ \;
     runHook postInstall
   '';
 

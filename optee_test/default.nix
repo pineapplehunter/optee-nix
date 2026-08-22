@@ -26,7 +26,7 @@ stdenv.mkDerivation (finalAttrs: {
   nativeBuildInputs = [ python-env ];
   buildInputs = [
     openssl
-    optee-client.lib
+    optee-client
   ];
 
   enableParallelBuilding = true;
@@ -35,33 +35,34 @@ stdenv.mkDerivation (finalAttrs: {
     patchShebangs --build scripts
   '';
 
-  preBuild = ''
-    mkdir -p "$NIX_BUILD_TOP/optee-client-export"
-    ln -s ${optee-client.dev}/include "$NIX_BUILD_TOP/optee-client-export/include"
-    ln -s ${optee-client.lib}/lib "$NIX_BUILD_TOP/optee-client-export/lib"
-  '';
-
   makeFlags = [
     "CROSS_COMPILE=${stdenv.cc.targetPrefix}"
     "TA_DEV_KIT_DIR=${optee-os-devkit.devkit-dir}"
-    "OPTEE_CLIENT_EXPORT=$(NIX_BUILD_TOP)/optee-client-export"
+    "OPTEE_CLIENT_EXPORT=${optee-client.dev}"
     "O=build"
+    "TA_DIR=${placeholder "out"}/lib/optee_armtz"
   ];
 
   installPhase = ''
     runHook preInstall
-    mkdir -p $out/bin $out/lib/optee_armtz $out/lib/tee-supplicant/plugins
-    find "$NIX_BUILD_TOP" -name '*.ta' -exec install -Dm644 {} $out/lib/optee_armtz/ \;
-    find "$NIX_BUILD_TOP" -name '*.plugin' -exec install -Dm644 {} $out/lib/tee-supplicant/plugins/ \;
-    install -Dm755 "$(find "$NIX_BUILD_TOP" -path '*/xtest/xtest' -type f -print -quit)" $out/bin/xtest
+    install -Dm755 host/xtest/build/xtest/xtest $out/bin/xtest
+    install -Dm755 host/supp_plugin/build/supp_plugin/*.plugin -t $out/lib/tee-supplicant/plugins
+    mkdir -p $out/lib/optee_armtz
+    find ta -name '*.ta' -exec install -Dm644 {} $out/lib/optee_armtz/ \;
     runHook postInstall
   '';
 
   meta = {
     description = "OP-TEE sanity test suite and trusted applications";
     homepage = "https://github.com/OP-TEE/optee_test";
-    license = lib.licenses.bsd2;
-    platforms = [ "aarch64-linux" ];
+    license = with lib.licenses; [
+      bsd2
+      gpl2Only
+    ];
+    platforms = [
+      "aarch64-linux"
+      "armv7l-linux"
+    ];
     mainProgram = "xtest";
   };
 })
