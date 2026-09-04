@@ -65,7 +65,10 @@ testers.nixosTest {
         qemu = {
           options = [
             "-machine virt,secure=on,gic-version=3,virtualization=off"
-            "-cpu max"
+            # Keep the advertised CPU features within what OP-TEE 4.10 enables
+            # at EL3. New features exposed by QEMU's `max` CPU (such as FPMR)
+            # otherwise make recent kernels execute inaccessible registers.
+            "-cpu cortex-a72"
             "-bios ${firmware}/share/optee/firmware/flash.bin"
             "-serial file:normal-world.log"
           ];
