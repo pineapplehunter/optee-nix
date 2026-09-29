@@ -104,10 +104,31 @@ The VM follows the upstream OP-TEE QEMU v8 boot flow:
    `/dev/teepriv0`.
 5. `tee-supplicant` serves packaged TAs from their immutable Nix store paths.
 
-The component baseline follows the OP-TEE 4.10.0 stable manifest: TF-A 2.14.0,
-U-Boot 2025.07, and OP-TEE OS/client/examples/tests 4.10.0. The U-Boot QEMU
-ramdisk load address is adjusted to avoid overlap with the NixOS kernel image.
-Unmodified nixpkgs QEMU is used.
+The OP-TEE and firmware packages are pinned to the **OP-TEE 4.10.0 QEMU v8
+manifest**, not independently tracked upstream releases:
+
+- Manifest repository: [OP-TEE/manifest](https://github.com/OP-TEE/manifest)
+- Release branch: `4.10.0`
+- Manifest commit: `6d5849d5c1e4054980bf430ce1e96ebd0f532590`
+- Platform: [`qemu_v8.xml`](https://github.com/OP-TEE/manifest/blob/6d5849d5c1e4054980bf430ce1e96ebd0f532590/qemu_v8.xml),
+  including [`common.xml`](https://github.com/OP-TEE/manifest/blob/6d5849d5c1e4054980bf430ce1e96ebd0f532590/common.xml)
+
+| Component | Pinned version / revision |
+| --- | --- |
+| OP-TEE OS, client, examples, tests, fTPM | `4.10.0` |
+| Trusted Firmware-A | `2.14.0` |
+| U-Boot | `2025.07` |
+| Microsoft TPM reference | `98b60a44aba79b15fcce1c0d1e46cf5918400f6a` |
+
+These sources are explicitly pinned with Nix hashes in the package expressions;
+TF-A does not inherit its source version from nixpkgs. Update them as a coordinated
+manifest baseline, not individually to their latest releases.
+
+This is a manifest-aligned subset, not the complete upstream build environment:
+NixOS replaces Buildroot, and Linux and unmodified QEMU come from the locked
+nixpkgs rather than the manifest's Linux and QEMU pins. Other unused manifest
+projects are not packaged. The U-Boot QEMU ramdisk load address is adjusted to
+avoid overlap with the NixOS kernel image.
 
 ## Test and develop
 
@@ -131,10 +152,11 @@ The development shell provides nixfmt-tree and ShellCheck.
 
 ## Updating dependencies
 
-1. Select an OP-TEE stable manifest and update all OP-TEE component tags as one
-   coordinated set.
-2. Update TF-A, U-Boot, QEMU assumptions, and `ms-tpm-20-ref` to the revisions
-   selected by that manifest.
+1. Select an OP-TEE stable platform manifest, record its exact commit above and
+   in `flake.nix`, and update all OP-TEE component tags as one coordinated set.
+2. Update the explicit TF-A, U-Boot, and `ms-tpm-20-ref` pins to the revisions
+   selected by that manifest. Review the nixpkgs Linux/QEMU exceptions against
+   the new baseline.
 3. Update source hashes and `flake.lock`.
 4. Recheck the U-Boot load-address adjustment and remove it if upstream no
    longer needs it.

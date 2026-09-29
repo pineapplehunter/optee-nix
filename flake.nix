@@ -16,6 +16,8 @@
         ];
 
         flake.overlays.default = final: prev: {
+          # Component pins follow OP-TEE/manifest 4.10.0, qemu_v8.xml + common.xml,
+          # commit 6d5849d5c1e4054980bf430ce1e96ebd0f532590. See README.md.
           optee = rec {
             version = "4.10.0";
             os = final.callPackage ./optee_os { };

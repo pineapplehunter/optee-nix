@@ -16,6 +16,18 @@ let
     optee-uboot
     ;
 in
+# Keep the packaged subset aligned with the documented 4.10.0 manifest.
+assert builtins.all (package: package.version == "4.10.0") [
+  optee-client
+  optee-examples-host
+  optee-examples-ta
+  optee-ftpm
+  optee-os
+  optee-os-devkit
+  optee-test
+];
+assert optee-firmware.version == "2.14.0";
+assert optee-uboot.version == "2025.07";
 runCommand "optee-package-set-check" { } ''
   test -f ${optee-os}/share/optee/tee.elf
   test -f ${optee-os}/share/optee/tee.bin

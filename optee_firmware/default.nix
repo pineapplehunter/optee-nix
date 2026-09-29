@@ -1,12 +1,21 @@
 {
   buildArmTrustedFirmware,
+  fetchFromGitHub,
   lib,
   optee-os,
   optee-uboot,
 }:
 
-buildArmTrustedFirmware {
+buildArmTrustedFirmware rec {
   pname = "optee-firmware";
+  # OP-TEE manifest 4.10.0 / qemu_v8.xml; do not inherit a moving nixpkgs source.
+  version = "2.14.0";
+  src = fetchFromGitHub {
+    owner = "ARM-software";
+    repo = "arm-trusted-firmware";
+    tag = "v${version}";
+    hash = "sha256-7imeQocGMSyGXTEhNs4s0bcDxZpbLSSkOyI7c5UxqVs=";
+  };
   platform = "qemu";
   installDir = "$out/share/optee/firmware";
 
