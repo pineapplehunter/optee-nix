@@ -16,6 +16,17 @@
         ];
 
         flake.overlays.default = final: prev: {
+          bcachefs-tools = prev.bcachefs-tools.overrideAttrs (
+            old:
+            final.lib.optionalAttrs (final.stdenv.buildPlatform != final.stdenv.hostPlatform) {
+              # The bindgen CLI wrapper adds host libc with -idirafter.
+              # Prefer target headers without discarding bindgenHook's flags.
+              preBuild = (old.preBuild or "") + ''
+                export BINDGEN_EXTRA_CLANG_ARGS="-isystem ${final.lib.getDev final.stdenv.cc.libc}/include $BINDGEN_EXTRA_CLANG_ARGS"
+              '';
+            }
+          );
+
           # Component pins follow OP-TEE/manifest 4.10.0, qemu_v8.xml + common.xml,
           # commit 6d5849d5c1e4054980bf430ce1e96ebd0f532590. See README.md.
           optee = rec {
