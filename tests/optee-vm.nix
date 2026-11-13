@@ -2,6 +2,8 @@
   lib,
   pkgsCross,
   qemu,
+  symlinkJoin,
+  writeShellScript,
   testers,
 }:
 
@@ -14,6 +16,18 @@ let
     };
   };
   ftpmKernelPackages = targetPackages.linuxPackagesFor ftpmKernel;
+  secureConsoleQemu = symlinkJoin {
+    name = "qemu-optee-consoles";
+    paths = [ qemu ];
+    passthru.stdenv = qemu.stdenv;
+    postBuild = ''
+      rm "$out/bin/qemu-system-aarch64"
+      ln -s ${writeShellScript "qemu-system-aarch64" ''
+        # Append after the stock driver's -serial stdio so UART0 stays live.
+        exec ${qemu}/bin/qemu-system-aarch64 "$@" -serial file:secure-world.log
+      ''} "$out/bin/qemu-system-aarch64"
+    '';
+  };
 in
 testers.nixosTest {
   name = "optee-vm";
@@ -63,6 +77,7 @@ testers.nixosTest {
         cores = 2;
         memorySize = 2048;
         qemu = {
+          package = lib.mkForce secureConsoleQemu;
           options = [
             "-machine virt,secure=on,gic-version=3,virtualization=off"
             # Keep the advertised CPU features within what OP-TEE 4.10 enables
@@ -70,7 +85,6 @@ testers.nixosTest {
             # otherwise make recent kernels execute inaccessible registers.
             "-cpu cortex-a72"
             "-bios ${firmware}/share/optee/firmware/flash.bin"
-            "-serial file:normal-world.log"
           ];
         };
       };
@@ -84,7 +98,9 @@ testers.nixosTest {
     start_all()
     machine.wait_for_unit("multi-user.target")
 
-    secure_world_output = machine.get_console_log()
+    secure_world_output = (machine.state_dir / "secure-world.log").read_text(errors="replace")
+    for line in secure_world_output.splitlines():
+        machine.log_serial(line)
     for message in [
         "I/TC: OP-TEE version:",
         "I/TC: Primary CPU switching to normal world boot",

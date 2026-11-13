@@ -48,23 +48,24 @@ of the platform's serial UARTs.
 
 The secure and normal worlds use separate emulated PL011 UARTs; there is no
 runtime switch between them. QEMU assigns `-serial` backends in order. This test
-routes them as follows:
+uses the stock NixOS test driver's `-serial stdio` backend for the first UART
+(`ttyAMA0`). Linux kernel messages, forwarded systemd journal messages, and
+command stderr appear live in the standard test log as `machine # ...`.
+Captured command stdout retains stock behavior: `machine.succeed()` returns it
+rather than automatically printing it.
 
-- the first UART (`ttyAMA0`) carries U-Boot, Linux, and systemd normal-world
-  output to `normal-world.log`;
-- the second UART carries TF-A and OP-TEE secure-world output to QEMU standard
-  output, which the NixOS test driver displays and returns from
-  `machine.get_console_log()`.
+A small QEMU executable wrapper appends `-serial file:secure-world.log` after
+all driver arguments, capturing the second UART's TF-A and OP-TEE secure-world
+output without changing the stock driver. The automated test reads this file
+from `machine.state_dir` after Linux reaches `multi-user.target`, displays its
+contents as `machine # ...`, and asserts the secure boot messages. Secure
+output is displayed at that checkpoint, not live; later secure output remains
+in the file.
 
-After starting the VM, find the normal-world log from the Python REPL with:
-
-```python
-print(machine.state_dir / "normal-world.log")
-```
-
-It can then be followed from another terminal with `tail -f`. Because the first
-UART uses QEMU's `file:` backend, it is output-only; use
-`machine.shell_interact()` for an interactive normal-world shell.
+`machine.wait_for_console_text()` watches the live normal-world console,
+including any firmware output using the same UART, not the secure capture.
+`machine.shell_interact()` still uses the private virtio test-shell/control
+console (`hvc0`), not a serial UART.
 
 Use <kbd>Ctrl-D</kbd> to leave the shell and then the REPL. The driver cleans up
 the VM. Runtime QEMU options can be overridden without rebuilding, for example:
@@ -140,7 +141,7 @@ nix build .#checks.x86_64-linux.optee-vm --no-link
 nix develop
 ```
 
-The VM check verifies normal- and secure-world boot, the TEE devices,
+The VM check verifies Linux and secure-world boot, the TEE devices,
 `tee-supplicant`, kernel OP-TEE initialization, the hello-world client/TA round
 trip, bounded regression test `xtest -t regression 1001`, and an fTPM random
 number request through `/dev/tpm0`. The guest kernel uses the matching nixpkgs
